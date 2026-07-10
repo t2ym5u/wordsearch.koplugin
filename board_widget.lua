@@ -40,7 +40,7 @@ function WordSearchBoardWidget:init()
     self.letter_face = Font:getFace("smallinfofont", face_sz)
 
     self.ges_events = {
-        CellTap = { GestureRange:new{ ges = "tap", range = self.dimen } },
+        CellTap = { GestureRange:new{ ges = "tap", range = function() return self.paint_rect end } },
     }
 end
 
