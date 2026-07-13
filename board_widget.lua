@@ -44,7 +44,7 @@ function WordSearchBoardWidget:init()
     }
 end
 
-function WordSearchBoardWidget:onCellTap(ges)
+function WordSearchBoardWidget:onCellTap(_, ges)
     if not self.paint_rect then return true end
     local rect = self.paint_rect
     local lx = ges.pos.x - rect.x
