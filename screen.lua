@@ -87,18 +87,13 @@ function WordSearchScreen:buildLayout()
         and math.max(math.floor(sw * 0.38), 120)
         or  math.floor(sw * 0.9)
 
-    local top_buttons = ButtonTable:new{
-        shrink_unneeded_width = true,
-        width   = btn_width,
-        buttons = {{
-            { text = _("New"),  callback = function() self:onNewGame() end },
-            { id = "lang_btn", text = self:_langLabel(),
-              callback = function() self:openLangMenu() end },
+    local title_bar = self:buildTitleBar(_("Word Search"), function()
+        return {
+            { text = _("New game"),     callback = function() self:onNewGame() end },
+            { text = self:_langLabel(), callback = function() self:openLangMenu() end },
             self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
-            self:makeCloseButtonConfig(),
-        }},
-    }
-    self.lang_btn = top_buttons:getButtonById("lang_btn")
+        }
+    end)
 
     local margin      = Size.margin.default
     local padding     = Size.padding.large
@@ -136,33 +131,26 @@ function WordSearchScreen:buildLayout()
     if is_landscape then
         local right = VerticalGroup:new{
             align = "center",
-            top_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.word_list_widget,
         }
-        self.layout = HorizontalGroup:new{
+        local content = HorizontalGroup:new{
             align  = "center",
             board_frame,
             HorizontalSpan:new{ width = Size.span.horizontal_default },
             right,
         }
+        self:buildLandscapeLayout(title_bar, content)
     else
-        self.layout = VerticalGroup:new{
+        local content = VerticalGroup:new{
             align = "center",
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            top_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
             board_frame,
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.word_list_widget,
-            VerticalSpan:new{ width = Size.span.vertical_large },
         }
+        self:buildPortraitLayout(title_bar, content, self.word_list_widget)
     end
-    self[1] = self.layout
     self:updateStatus()
 end
 
