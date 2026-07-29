@@ -3,5 +3,5 @@ return {
     name        = "wordsearch",
     fullname    = _("Word Search"),
     description = _("Find hidden words in a letter grid"),
-    version     = "1.1.10",
+    version     = "1.1.11",
 }
