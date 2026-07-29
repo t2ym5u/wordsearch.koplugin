@@ -1,18 +1,15 @@
-local WORDS_EN = {
-    "PYTHON", "ROCKET", "CASTLE", "STREAM", "BRIDGE", "FOREST", "PLANET",
-    "GARDEN", "MIRROR", "SILVER", "RABBIT", "ORANGE", "MARBLE", "WINTER",
-    "SUMMER", "SPRING", "AUTUMN", "THUNDER", "DOLPHIN", "LEOPARD", "BUFFALO",
-    "CHAPTER", "DYNAMIC", "FORTUNE", "GLACIER", "HARVEST", "LANTERN",
-    "MONSTER", "PASSION", "QUANTUM",
-}
+-- Word pools (4-7 letters, frequency-filtered common words, shared with anagram.koplugin)
+local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
+local function lrequire(name)
+    local key = _dir .. name
+    if not package.loaded[key] then
+        package.loaded[key] = assert(loadfile(_dir .. name .. ".lua"))()
+    end
+    return package.loaded[key]
+end
 
-local WORDS_FR = {
-    "MAISON", "JARDIN", "RIVIERE", "FORET", "SOLEIL", "NUAGE", "PIERRE",
-    "ETOILE", "BALLON", "CANARD", "RENARD", "HIBOU", "TIGRE", "LAPIN",
-    "DRAGON", "FLEUVE", "DESERT", "BATEAU", "CERISE", "ORANGE", "FRAISE",
-    "PECHE", "CITRON", "ANANAS", "POMME", "RAISIN", "MANGUE", "BANANE",
-    "CAROTTE", "TOMATE",
-}
+local WORDS_EN = lrequire("words_en")
+local WORDS_FR = lrequire("words_fr")
 
 local DIRS = { {1,0}, {0,1}, {1,1} }
 local ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
