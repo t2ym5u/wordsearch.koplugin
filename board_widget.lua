@@ -9,8 +9,8 @@ local UIManager     = require("ui/uimanager")
 local C_BG       = Blitbuffer.COLOR_WHITE
 local C_GRID     = Blitbuffer.COLOR_GRAY_9
 local C_BORDER   = Blitbuffer.COLOR_BLACK
-local C_FOUND    = Blitbuffer.COLOR_GRAY_C
-local C_SELECTED = Blitbuffer.COLOR_GRAY_A
+local C_FOUND    = Blitbuffer.COLOR_LIGHT_GRAY
+local C_SELECTED = Blitbuffer.COLOR_GRAY
 local C_TEXT     = Blitbuffer.COLOR_BLACK
 
 -- ---------------------------------------------------------------------------
