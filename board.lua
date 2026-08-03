@@ -11,9 +11,12 @@ end
 local WORDS_EN = lrequire("words_en")
 local WORDS_FR = lrequire("words_fr")
 
-local DIRS = { {1,0}, {0,1}, {1,1} }
+local DIRS = {
+    {1,0}, {-1,0}, {0,1}, {0,-1},
+    {1,1}, {1,-1}, {-1,1}, {-1,-1},
+}
 local ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-local SIZE  = 10
+local SIZE  = 12
 
 -- ---------------------------------------------------------------------------
 -- WordSearchBoard
@@ -43,18 +46,21 @@ function WordSearchBoard:generate()
     local size = self.size
     local pool = self:_wordList()
 
-    -- pick 8-10 words
+    -- pick words to place
     local shuffled = {}
     for _, w in ipairs(pool) do shuffled[#shuffled + 1] = w end
     for i = #shuffled, 2, -1 do
         local j = math.random(i)
         shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
     end
-    local count = math.random(8, 10)
+    local count = math.random(12, 16)
     local chosen = {}
     for i = 1, math.min(count, #shuffled) do
         chosen[#chosen + 1] = shuffled[i]
     end
+    -- longest words first: they're harder to fit and give shorter words
+    -- more existing letters to cross over
+    table.sort(chosen, function(a, b) return #a > #b end)
 
     -- empty grid
     local grid = {}
@@ -63,37 +69,53 @@ function WordSearchBoard:generate()
         for c = 1, size do grid[r][c] = "" end
     end
 
+    -- Returns end position and overlap count if `word` fits at (r1,c1) going
+    -- (dr,dc) without letter conflicts, or nil if it doesn't fit.
+    local function fits(word, r1, c1, dr, dc)
+        local wlen = #word
+        local r2 = r1 + dr * (wlen - 1)
+        local c2 = c1 + dc * (wlen - 1)
+        if r2 < 1 or r2 > size or c2 < 1 or c2 > size then return nil end
+        local overlaps = 0
+        for i = 0, wlen - 1 do
+            local ch = grid[r1 + dr*i][c1 + dc*i]
+            local wch = word:sub(i+1, i+1)
+            if ch ~= "" then
+                if ch ~= wch then return nil end
+                overlaps = overlaps + 1
+            end
+        end
+        return r2, c2, overlaps
+    end
+
     local placed = {}
     for _, word in ipairs(chosen) do
-        local wlen = #word
-        local ok = false
-        for _ = 1, 200 do
-            local dir = DIRS[math.random(#DIRS)]
-            local dr, dc = dir[1], dir[2]
-            local r1 = math.random(size)
-            local c1 = math.random(size)
-            local r2 = r1 + dr * (wlen - 1)
-            local c2 = c1 + dc * (wlen - 1)
-            if r2 >= 1 and r2 <= size and c2 >= 1 and c2 <= size then
-                local conflict = false
-                for i = 0, wlen - 1 do
-                    local ch = grid[r1 + dr*i][c1 + dc*i]
-                    local wch = word:sub(i+1, i+1)
-                    if ch ~= "" and ch ~= wch then conflict = true; break end
-                end
-                if not conflict then
-                    for i = 0, wlen - 1 do
-                        grid[r1 + dr*i][c1 + dc*i] = word:sub(i+1, i+1)
+        -- Enumerate every valid placement, preferring ones that cross an
+        -- already-placed word (overlaps > 0) so the grid gets interlinked.
+        local crossing, any = {}, {}
+        for r1 = 1, size do
+            for c1 = 1, size do
+                for _, dir in ipairs(DIRS) do
+                    local dr, dc = dir[1], dir[2]
+                    local r2, c2, overlaps = fits(word, r1, c1, dr, dc)
+                    if r2 then
+                        local cand = { r1=r1, c1=c1, r2=r2, c2=c2, dr=dr, dc=dc }
+                        any[#any + 1] = cand
+                        if overlaps > 0 then crossing[#crossing + 1] = cand end
                     end
-                    placed[#placed + 1] = { word=word, r1=r1, c1=c1, r2=r2, c2=c2 }
-                    ok = true
-                    break
                 end
             end
         end
-        if not ok then
-            -- skip word if can't place
+        local pool_cands = #crossing > 0 and crossing or any
+        if #pool_cands > 0 then
+            local pick = pool_cands[math.random(#pool_cands)]
+            local wlen = #word
+            for i = 0, wlen - 1 do
+                grid[pick.r1 + pick.dr*i][pick.c1 + pick.dc*i] = word:sub(i+1, i+1)
+            end
+            placed[#placed + 1] = { word=word, r1=pick.r1, c1=pick.c1, r2=pick.r2, c2=pick.c2 }
         end
+        -- skip word if it truly doesn't fit anywhere
     end
 
     -- fill remaining cells

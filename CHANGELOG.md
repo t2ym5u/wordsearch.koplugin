@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.14] - 2026-08-03
+
+### Fixed
+- The word list was rendered with a single-line, non-wrapping widget, so
+  it routinely ran wider than the screen and part of it was left
+  invisible. It's now shown in a width-bound, auto-height text box that
+  wraps to as many lines as needed.
+
+### Changed
+- Puzzles now place 12-16 words (was 8-10) on a larger 12x12 grid (was
+  10x10).
+- Word placement now tries all 8 directions (previously only
+  right/down/diagonal-down-right) and prefers positions that cross an
+  already-placed word's matching letter, so words intersect far more
+  often instead of only by chance.
+
 ## [1.1.13] - 2026-07-31
 
 ### Fixed
