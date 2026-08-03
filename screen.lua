@@ -14,7 +14,7 @@ local FrameContainer  = require("ui/widget/container/framecontainer")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local Size            = require("ui/size")
-local TextWidget      = require("ui/widget/textwidget")
+local TextBoxWidget   = require("ui/widget/textboxwidget")
 local UIManager       = require("ui/uimanager")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
@@ -125,8 +125,18 @@ function WordSearchScreen:buildLayout()
         self.board_widget,
     }
 
-    -- Word list display
-    self.word_list_widget = self:_buildWordList()
+    -- Word list display — wrap in a width-bound TextBoxWidget (no fixed
+    -- height, so it grows to fit every word) instead of a single-line
+    -- TextWidget that could run off the edge of the screen.
+    local list_w = is_landscape
+        and math.max(btn_width - margin * 2, 100)
+        or  board_max_w
+
+    self.word_list_widget = TextBoxWidget:new{
+        text  = self:_wordListText(),
+        face  = Font:getFace("smallinfofont"),
+        width = list_w,
+    }
 
     if is_landscape then
         local right = VerticalGroup:new{
@@ -154,7 +164,7 @@ function WordSearchScreen:buildLayout()
     self:updateStatus()
 end
 
-function WordSearchScreen:_buildWordList()
+function WordSearchScreen:_wordListText()
     local board = self.board
     local parts = {}
     for i, entry in ipairs(board.word_list) do
@@ -164,11 +174,7 @@ function WordSearchScreen:_buildWordList()
             parts[#parts + 1] = entry.word
         end
     end
-    local text = table.concat(parts, "  ")
-    return TextWidget:new{
-        text = text,
-        face = Font:getFace("smallinfofont"),
-    }
+    return table.concat(parts, "  ")
 end
 
 function WordSearchScreen:onSelectWord(r1, c1, r2, c2)
@@ -189,16 +195,7 @@ end
 
 function WordSearchScreen:_refreshWordList()
     if self.word_list_widget then
-        local board = self.board
-        local parts = {}
-        for i, entry in ipairs(board.word_list) do
-            if board.found[i] then
-                parts[#parts + 1] = "\xE2\x9C\x93 " .. entry.word
-            else
-                parts[#parts + 1] = entry.word
-            end
-        end
-        self.word_list_widget:setText(table.concat(parts, "  "))
+        self.word_list_widget:setText(self:_wordListText())
     end
 end
 
