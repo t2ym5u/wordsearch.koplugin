@@ -138,6 +138,8 @@ function WordSearchScreen:buildLayout()
         width = list_w,
     }
 
+    self.status_text:setMaxWidth(is_landscape and list_w or (self.board_widget.w + frame_extra))
+
     if is_landscape then
         local right = VerticalGroup:new{
             align = "center",
