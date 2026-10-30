@@ -84,6 +84,7 @@ function WordSearchScreen:buildLayout()
     local title_bar = self:buildTitleBar(_("Word Search"), function()
         return {
             { text = _("New game"),     callback = function() self:onNewGame() end },
+            self:makeDailyButtonConfig(),
             { text = self:_langLabel(), callback = function() self:openLangMenu() end },
             self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
         }
