@@ -30,7 +30,7 @@ Find all the hidden words in the letter grid. Words may run in any of 8 directio
 |--------|-----|
 | Mark word start | Tap first letter |
 | Mark word end | Tap last letter |
-| New game | Tap **New** |
+| New game | Tap **New game** |
 | Show rules | Tap **Rules** |
 
 ## License

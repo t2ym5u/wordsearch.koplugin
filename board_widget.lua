@@ -1,4 +1,5 @@
 local Blitbuffer    = require("ffi/blitbuffer")
+local Device        = require("device")
 local Font          = require("ui/font")
 local Geom          = require("ui/geometry")
 local GestureRange  = require("ui/gesturerange")
@@ -12,6 +13,28 @@ local C_BORDER   = Blitbuffer.COLOR_BLACK
 local C_FOUND    = Blitbuffer.COLOR_LIGHT_GRAY
 local C_SELECTED = Blitbuffer.COLOR_GRAY
 local C_TEXT     = Blitbuffer.COLOR_BLACK
+
+local Screen = Device.screen
+
+-- Largest face whose ink for `sample` fits max_w x max_h. Measured unbounded
+-- (a max_width limit cuts the text, so the width test could never fail), ink
+-- height is y_top + y_bottom, and Font:getFace scales its size by the DPI, so
+-- the pixel bound is converted back first.
+local function fitFace(name, sample, max_w, max_h)
+    local lo = 6
+    local hi = math.max(lo, math.floor(max_h * 1000 / Screen:scaleBySize(1000)) * 2)
+    local best = lo
+    while lo <= hi do
+        local mid = math.floor((lo + hi) / 2)
+        local m = RenderText:sizeUtf8Text(0, Screen:getWidth(), Font:getFace(name, mid), sample, true, false)
+        if m.x <= max_w and m.y_top + m.y_bottom <= max_h then
+            best, lo = mid, mid + 1
+        else
+            hi = mid - 1
+        end
+    end
+    return Font:getFace(name, best)
+end
 
 -- ---------------------------------------------------------------------------
 -- WordSearchBoardWidget
@@ -36,8 +59,7 @@ function WordSearchBoardWidget:init()
     self.paint_rect = nil
     self.first_tap  = nil
 
-    local face_sz = math.max(6, math.floor(cell * 0.55))
-    self.letter_face = Font:getFace("smallinfofont", face_sz)
+    self.letter_face = fitFace("smallinfofont", "W", math.floor(cell * 0.75), math.floor(cell * 0.55))
 
     self.ges_events = {
         CellTap = { GestureRange:new{ ges = "tap", range = function() return self.paint_rect end } },
@@ -128,17 +150,18 @@ function WordSearchBoardWidget:paintTo(bb, x, y)
     bb:paintRect(x + self.w - thick, y, thick, self.h, C_BORDER)
 
     -- Letters
-    local pad  = math.max(1, math.floor(cell * 0.1))
-    local cinn = cell - 2 * pad
+    local half = math.floor(cell / 2)
     for r = 1, size do
         for c = 1, size do
             local ch = board.grid[r][c]
             if ch and ch ~= "" then
                 local cx = x + (c - 1) * cell
                 local cy = y + (r - 1) * cell
-                local m  = RenderText:sizeUtf8Text(0, cinn, self.letter_face, ch, true, false)
-                local tx = cx + pad + math.floor((cinn - m.x) / 2)
-                local ty = cy + pad + math.floor((cinn + m.y_top - m.y_bottom) / 2)
+                -- Centred on the cell: the baseline sits half the ink
+                -- height below the middle.
+                local m  = RenderText:sizeUtf8Text(0, Screen:getWidth(), self.letter_face, ch, true, false)
+                local tx = cx + half - math.floor(m.x / 2)
+                local ty = cy + half + math.floor((m.y_top - m.y_bottom) / 2)
                 RenderText:renderUtf8Text(bb, tx, ty, self.letter_face, ch, true, false, C_TEXT)
             end
         end
