@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-10-30
+
+### Changed
+- Redesigned play screen: the grid is larger, filling the room the word list
+  leaves, with a single frame around it. The word list's height is reserved
+  up front, so ticking words off never pushes it off the screen.
+- The status line reads "12×12 · Found: 3/10" and wraps in landscape instead
+  of being cut off.
+- The title-bar menu shows "Language: …" (was the bare "EN" / "FR").
+- Once every word is found, "New game" appears under the word list, so the
+  next round no longer needs the menu.
+
+### Fixed
+- The last word found was never ticked in the list.
+- Letters were sized from the cell and then scaled again for the screen's
+  DPI, so they could overflow their cells; they are now fitted and centred.
+
 ## [1.1.19] - 2026-10-07
 
 ### Fixed

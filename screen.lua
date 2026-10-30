@@ -7,8 +7,6 @@ local function lrequire(name)
     return package.loaded[key]
 end
 
-local ButtonTable     = require("ui/widget/buttontable")
-local Device          = require("device")
 local Font            = require("ui/font")
 local FrameContainer  = require("ui/widget/container/framecontainer")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
@@ -25,8 +23,6 @@ local ScreenBase            = require("screen_base")
 local MenuHelper            = require("menu_helper")
 local WordSearchBoard       = lrequire("board")
 local WordSearchBoardWidget = lrequire("board_widget")
-
-local DeviceScreen = Device.screen
 
 -- ---------------------------------------------------------------------------
 -- WordSearchScreen
@@ -74,18 +70,16 @@ function WordSearchScreen:init()
     ScreenBase.init(self)
 end
 
+function WordSearchScreen:isRoundOver()
+    return self.board:allFound()
+end
+
 function WordSearchScreen:serializeState()
     return self.board:serialize()
 end
 
 function WordSearchScreen:buildLayout()
-    local sw           = DeviceScreen:getWidth()
-    local sh = DeviceScreen:getHeight()
     local is_landscape = self:isLandscape()
-
-    local btn_width = is_landscape
-        and math.max(math.floor(sw * 0.38), 120)
-        or  math.floor(sw * 0.9)
 
     local title_bar = self:buildTitleBar(_("Word Search"), function()
         return {
@@ -95,82 +89,84 @@ function WordSearchScreen:buildLayout()
         }
     end)
 
-    local margin      = Size.margin.default
-    local padding     = Size.padding.large
-    local frame_extra = (padding + margin) * 2
+    -- Word list: wraps to the controls width. Its height is reserved for the
+    -- list with every word ticked off, so finding a word never adds a line
+    -- and pushes the controls off the bottom of the screen.
+    local controls_w = self:getControlsWidth()
+    self.status_text:setMaxWidth(controls_w)
+    local list_face = Font:getFace("smallinfofont")
+    local full = TextBoxWidget:new{
+        text      = self:_wordListText(true),
+        face      = list_face,
+        width     = controls_w,
+        alignment = "center",
+    }
+    local list_h = full:getSize().h
+    full:free()
+    self.word_list_widget = TextBoxWidget:new{
+        text      = self:_wordListText(),
+        face      = list_face,
+        width     = controls_w,
+        height    = list_h,
+        alignment = "center",
+    }
+    local controls = VerticalGroup:new{
+        align = "center",
+        self.status_text,
+        VerticalSpan:new{ width = Size.span.vertical_large },
+        self.word_list_widget,
+    }
 
-    local board_max_w, board_max_h
-    if is_landscape then
-        board_max_w = math.floor(sw * 0.55)
-        board_max_h = sh - frame_extra - 20
-    else
-        board_max_w = sw - frame_extra
-        board_max_h = math.floor(sh * 0.55)
+    -- No bottom actions while playing (the grid and the word list are the game); once
+    -- the round is over, "New game" appears under the list.
+    self.action_bar = nil
+    if self:isRoundOver() then
+        table.insert(controls, VerticalSpan:new{ width = Size.span.vertical_default })
+        table.insert(controls, self:buildActionBar({}))
     end
-    board_max_w = math.max(board_max_w, 100)
-    board_max_h = math.max(board_max_h, 100)
 
+    -- Board widget: it draws its own border, so the frame only pads it.
+    local frame_pad   = Size.padding.large
+    local frame_extra = 2 * frame_pad
+    local budget_w, budget_h = self:getBoardBudget(title_bar, controls)
+    local board_size = math.max(math.min(budget_w, budget_h) - frame_extra, 100)
     self.board_widget = WordSearchBoardWidget:new{
         board        = self.board,
-        max_width    = board_max_w,
-        max_height   = board_max_h,
+        max_width    = board_size,
+        max_height   = board_size,
         onSelectWord = function(r1, c1, r2, c2)
             self:onSelectWord(r1, c1, r2, c2)
         end,
     }
 
     local board_frame = FrameContainer:new{
-        padding = padding,
-        margin  = margin,
+        padding    = frame_pad,
+        margin     = 0,
+        bordersize = 0,
         self.board_widget,
     }
 
-    -- Word list display — wrap in a width-bound TextBoxWidget (no fixed
-    -- height, so it grows to fit every word) instead of a single-line
-    -- TextWidget that could run off the edge of the screen.
-    local list_w = is_landscape
-        and math.max(btn_width - margin * 2, 100)
-        or  board_max_w
-
-    self.word_list_widget = TextBoxWidget:new{
-        text  = self:_wordListText(),
-        face  = Font:getFace("smallinfofont"),
-        width = list_w,
-    }
-
-    self.status_text:setMaxWidth(is_landscape and list_w or (self.board_widget.w + frame_extra))
-
     if is_landscape then
-        local right = VerticalGroup:new{
-            align = "center",
-            self.status_text,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.word_list_widget,
-        }
         local content = HorizontalGroup:new{
-            align  = "center",
+            align = "center",
             board_frame,
-            HorizontalSpan:new{ width = Size.span.horizontal_default },
-            right,
+            HorizontalSpan:new{ width = self:getGutter() },
+            controls,
         }
         self:buildLandscapeLayout(title_bar, content)
     else
-        local content = VerticalGroup:new{
-            align = "center",
-            board_frame,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.status_text,
-        }
-        self:buildPortraitLayout(title_bar, content, self.word_list_widget)
+        self:buildPortraitLayout(title_bar, board_frame,
+            VerticalGroup:new{ align = "center", controls, VerticalSpan:new{ width = self:getGutter() } })
     end
     self:updateStatus()
 end
 
-function WordSearchScreen:_wordListText()
+-- all_found: render every word as ticked off (used to reserve the height).
+function WordSearchScreen:_wordListText(all_found)
     local board = self.board
     local parts = {}
     for i, entry in ipairs(board.word_list) do
-        if board.found[i] then
+        if all_found or board.found[i] then
             parts[#parts + 1] = "\xE2\x9C\x93 " .. entry.word
         else
             parts[#parts + 1] = entry.word
@@ -186,6 +182,9 @@ function WordSearchScreen:onSelectWord(r1, c1, r2, c2)
         self:updateStatus(T(_("Found: %1!"), word))
         self.plugin:saveState(self.board:serialize())
         if self.board:allFound() then
+            -- Rebuild: ticks the last word too and brings up "New game".
+            self:buildLayout()
+            UIManager:setDirty(self, function() return "ui", self.dimen end)
             self:updateStatus(_("Congratulations! All words found!"))
         else
             self:_refreshWordList()
@@ -236,16 +235,16 @@ function WordSearchScreen:updateStatus(msg)
     elseif self.board:allFound() then
         status = _("All words found!")
     else
-        local found = self.board:foundCount()
-        local total = #self.board.word_list
-        status = T(_("Found: %1/%2 words"), found, total)
+        status = self:joinStatus(
+            T("%1×%1", self.board.size),
+            T(_("Found: %1/%2"), self.board:foundCount(), #self.board.word_list))
     end
     ScreenBase.updateStatus(self, status)
 end
 
 function WordSearchScreen:_langLabel()
     local lang = self.plugin:getSetting("lang", "en")
-    return lang == "fr" and "FR" or "EN"
+    return T(_("Language: %1"), lang == "fr" and "FR" or "EN")
 end
 
 return WordSearchScreen
