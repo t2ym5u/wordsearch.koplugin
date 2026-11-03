@@ -19,6 +19,7 @@ local WordSearch = PluginBase:extend{
     name      = "wordsearch",
     menu_text = _("Word Search"),
     menu_hint = "tools",
+    party_mode = true,
 }
 
 function WordSearch:createScreen()

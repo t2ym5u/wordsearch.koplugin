@@ -8,8 +8,10 @@ local function lrequire(name)
     return package.loaded[key]
 end
 
-local WORDS_EN = lrequire("words_en")
-local WORDS_FR = lrequire("words_fr")
+-- Never draw a word the family-friendly blocklist rules out (blocklist.lua).
+local Blocklist = lrequire("blocklist")
+local WORDS_EN = Blocklist.filter(lrequire("words_en"), "en")
+local WORDS_FR = Blocklist.filter(lrequire("words_fr"), "fr")
 
 local DIRS = {
     {1,0}, {-1,0}, {0,1}, {0,-1},
@@ -134,14 +136,14 @@ function WordSearchBoard:generate()
     for i = 1, #placed do self.found[i] = false end
 end
 
--- Returns "found" or "none"
+-- Returns "found", word, index or "none"
 function WordSearchBoard:tapCell(r1, c1, r2, c2)
     for i, entry in ipairs(self.word_list) do
         if not self.found[i] then
             if (entry.r1 == r1 and entry.c1 == c1 and entry.r2 == r2 and entry.c2 == c2) or
                (entry.r1 == r2 and entry.c1 == c2 and entry.r2 == r1 and entry.c2 == c1) then
                 self.found[i] = true
-                return "found", entry.word
+                return "found", entry.word, i
             end
         end
     end
