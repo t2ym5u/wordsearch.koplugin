@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-11-02
+
+### Added
+- Multiplayer mode ("Word Search · multiplayer" under Tools → Games → Party
+  & quiz, or Mode: Multiplayer in the menu): 2 to 8 players race on one
+  shared grid. Whoever spots a word traces it and taps their name in "Who
+  found it?"; the word is ticked with their initial and scores its length
+  (or 1 point per word). Optional clock (3, 5 or 10 minutes); a round ends
+  when every word is found or time is up (missed words are shown); a match
+  is 1, 2, 3 or 5 grids, with scores after each and a final winner. The
+  match in progress is saved apart from the solo grid. Separate
+  multiplayer rules. Needs game-common with party.lua.
+
+### Changed
+- Family-friendly words: the game is also played at a family table, so it
+  never hides a vulgar, sexual, scatological, slur or drug-related word in
+  the grid any more (`blocklist.lua`, applied when the word lists load) --
+  69 English and 113 French words, e.g. CACA and SUCEUR.
+
 ## [1.3.1] - 2026-11-02
 
 ### Changed
