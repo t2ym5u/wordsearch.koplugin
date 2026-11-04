@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-11-04
+
+### Changed
+- Opening the game no longer builds a grid it then throws away (it was
+  generated even when a saved game, solo or multiplayer, was about to be
+  restored).
+
 ## [1.4.1] - 2026-11-03
 
 ### Changed

@@ -133,8 +133,10 @@ end
 function WordSearchScreen:_loadSolo()
     local state = self.plugin:loadState()
     local lang  = self.plugin:getSetting("lang", "en")
-    self.board  = WordSearchBoard:new{ lang = lang }
-    self.board:load(state)
+    self.board  = WordSearchBoard:new{ lang = lang, empty = true }
+    if not self.board:load(state) then
+        self.board:generate()
+    end
     self.match = nil
 end
 
@@ -453,7 +455,7 @@ end
 function WordSearchScreen:_loadParty()
     local t = self.plugin:loadState(PARTY_KEY)
     local m = type(t) == "table" and PartyMatch.restore(t.match)
-    local board = WordSearchBoard:new{ lang = self.plugin:getSetting("lang", "en") }
+    local board = WordSearchBoard:new{ lang = self.plugin:getSetting("lang", "en"), empty = true }
     if m and board:load(t.board) then
         self.match, self.board = m, board
     else
