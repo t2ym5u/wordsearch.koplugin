@@ -120,3 +120,35 @@ describe("WordSearchBoard", function()
         end)
     end)
 end)
+
+describe("word list memory", function()
+    it("is not loaded when the module is required", function()
+        local Fresh = assert(loadfile(DIR .. "board.lua"))()
+        assert.are.same({}, Fresh.loadedLanguages())
+    end)
+
+    it("loads only the language played, and release() drops it", function()
+        local Board = require("board")
+        Board.release()
+        Board:new{ lang = "fr", empty = true }
+        assert.are.same({}, Board.loadedLanguages())
+        Board:new{ lang = "fr" }
+        assert.are.same({ "fr" }, Board.loadedLanguages())
+        Board:new{ lang = "en" }
+        assert.are.same({ "en" }, Board.loadedLanguages())
+        Board.release()
+        assert.are.same({}, Board.loadedLanguages())
+    end)
+
+    it("builds the same grid after a release", function()
+        local Board = require("board")
+        math.randomseed(5)
+        local a = Board:new{ lang = "en" }
+        Board.release()
+        math.randomseed(5)
+        local b = Board:new{ lang = "en" }
+        assert.are.same(a.grid, b.grid)
+        assert.are.same(a.word_list, b.word_list)
+        Board.release()
+    end)
+end)
