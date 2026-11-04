@@ -10,8 +10,22 @@ end
 
 -- Never draw a word the family-friendly blocklist rules out (blocklist.lua).
 local Blocklist = lrequire("blocklist")
-local WORDS_EN = Blocklist.filter(lrequire("words_en"), "en")
-local WORDS_FR = Blocklist.filter(lrequire("words_fr"), "fr")
+
+-- A language's word pool loads the first time that language is played, not
+-- with the module, and only that language's (switching language drops the
+-- other one). WordSearchBoard.release() (the screen closing) drops it: it
+-- reads again in a few milliseconds. Read with loadfile, not lrequire, so
+-- the raw list is not kept in package.loaded next to the filtered one.
+local WORDS = {}
+local function wordList(lang)
+    lang = lang == "fr" and "fr" or "en"
+    local list = WORDS[lang]
+    if not list then
+        list = Blocklist.filter(assert(loadfile(_dir .. "words_" .. lang .. ".lua"))(), lang)
+        WORDS = { [lang] = list }
+    end
+    return list
+end
 
 local DIRS = {
     {1,0}, {-1,0}, {0,1}, {0,-1},
@@ -43,7 +57,21 @@ function WordSearchBoard:new(opts)
 end
 
 function WordSearchBoard:_wordList()
-    return self.lang == "fr" and WORDS_FR or WORDS_EN
+    return wordList(self.lang)
+end
+
+-- Drops the loaded word pool (called when the game screen closes); the next
+-- grid reads its language's list again.
+function WordSearchBoard.release()
+    WORDS = {}
+end
+
+-- The languages whose word pool is loaded now (for the specs).
+function WordSearchBoard.loadedLanguages()
+    local out = {}
+    for lang in pairs(WORDS) do out[#out + 1] = lang end
+    table.sort(out)
+    return out
 end
 
 function WordSearchBoard:generate()

@@ -672,4 +672,10 @@ function WordSearchScreen:_onTick(gen)
     UIManager:scheduleIn(1, function() self:_onTick(gen) end)
 end
 
+-- The word lists are only needed while a game is open: drop them when the
+-- screen closes (the next game reads its language's list again).
+function WordSearchScreen:onCloseWidget()
+    WordSearchBoard.release()
+end
+
 return WordSearchScreen
