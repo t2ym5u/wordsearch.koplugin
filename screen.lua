@@ -132,7 +132,7 @@ end
 
 function WordSearchScreen:_loadSolo()
     local state = self.plugin:loadState()
-    local lang  = self.plugin:getSetting("lang", "en")
+    local lang  = self.plugin:getLang({ "fr", "en" })
     self.board  = WordSearchBoard:new{ lang = lang, empty = true }
     if not self.board:load(state) then
         self.board:generate()
@@ -347,7 +347,7 @@ end
 
 function WordSearchScreen:onNewGame()
     if self.party then return self:onNewMatch() end
-    local lang = self.plugin:getSetting("lang", "en")
+    local lang = self.plugin:getLang({ "fr", "en" })
     self.board = WordSearchBoard:new{ lang = lang }
     self.plugin:saveState(self.board:serialize())
     self:buildLayout()
@@ -362,10 +362,10 @@ function WordSearchScreen:openLangMenu()
     MenuHelper.openPickerMenu{
         title      = _("Language"),
         items      = items,
-        current_id = self.plugin:getSetting("lang", "en"),
+        current_id = self.plugin:getLang({ "fr", "en" }),
         parent     = self,
         on_select  = function(lang)
-            self.plugin:saveSetting("lang", lang)
+            self.plugin:setLang(lang)
             if self.lang_btn then
                 self.lang_btn:setText(self:_langLabel(), self.lang_btn.width)
             end
@@ -396,7 +396,7 @@ function WordSearchScreen:updateStatus(msg)
 end
 
 function WordSearchScreen:_langLabel()
-    local lang = self.plugin:getSetting("lang", "en")
+    local lang = self.plugin:getLang({ "fr", "en" })
     return T(_("Language: %1"), lang == "fr" and "FR" or "EN")
 end
 
@@ -442,7 +442,7 @@ function WordSearchScreen:_partyOptions()
 end
 
 function WordSearchScreen:_newBoard()
-    return WordSearchBoard:new{ lang = self.plugin:getSetting("lang", "en") }
+    return WordSearchBoard:new{ lang = self.plugin:getLang({ "fr", "en" }) }
 end
 
 function WordSearchScreen:_newMatch()
@@ -455,7 +455,7 @@ end
 function WordSearchScreen:_loadParty()
     local t = self.plugin:loadState(PARTY_KEY)
     local m = type(t) == "table" and PartyMatch.restore(t.match)
-    local board = WordSearchBoard:new{ lang = self.plugin:getSetting("lang", "en"), empty = true }
+    local board = WordSearchBoard:new{ lang = self.plugin:getLang({ "fr", "en" }), empty = true }
     if m and board:load(t.board) then
         self.match, self.board = m, board
     else
