@@ -46,6 +46,7 @@ local WordSearchBoardWidget = InputContainer:extend{
     max_height = 200,
     onFirstTap = nil,
     onSelectWord = nil,
+    parent     = nil,   -- the screen, repainted when a tap changes the board
 }
 
 function WordSearchBoardWidget:init()
@@ -80,14 +81,14 @@ function WordSearchBoardWidget:onCellTap(_, ges)
 
     if not self.first_tap then
         self.first_tap = { r = r, c = c }
-        self:refresh()
+        self:refresh(self.parent)
     else
         local r1, c1 = self.first_tap.r, self.first_tap.c
         self.first_tap = nil
         if self.onSelectWord then
             self.onSelectWord(r1, c1, r, c)
         end
-        self:refresh()
+        self:refresh(self.parent)
     end
     return true
 end
@@ -168,8 +169,10 @@ function WordSearchBoardWidget:paintTo(bb, x, y)
     end
 end
 
-function WordSearchBoardWidget:refresh()
-    UIManager:setDirty(self, function()
+-- `parent` is the screen: UIManager only repaints top-level widgets, so
+-- marking this widget itself dirty would refresh the old pixels.
+function WordSearchBoardWidget:refresh(parent)
+    UIManager:setDirty(parent or self, function()
         return "ui", self.paint_rect or self.dimen
     end)
 end

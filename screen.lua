@@ -260,6 +260,7 @@ function WordSearchScreen:buildLayout()
         board        = self.board,
         max_width    = board_size,
         max_height   = board_size,
+        parent       = self,
         onSelectWord = function(r1, c1, r2, c2)
             self:onSelectWord(r1, c1, r2, c2)
         end,
@@ -323,7 +324,7 @@ function WordSearchScreen:onSelectWord(r1, c1, r2, c2)
     if self.party then return self:_partySelectWord(r1, c1, r2, c2) end
     local result, word = self.board:tapCell(r1, c1, r2, c2)
     if result == "found" then
-        self.board_widget:refresh()
+        self.board_widget:refresh(self)
         self:updateStatus(T(_("Found: %1!"), word))
         self.plugin:saveState(self.board:serialize())
         if self.board:allFound() then
@@ -531,7 +532,7 @@ function WordSearchScreen:onWordClaimed(i, p)
         return
     end
     self:_refreshWordList()
-    if self.board_widget then self.board_widget:refresh() end
+    if self.board_widget then self.board_widget:refresh(self) end
     self:updateStatus()
     self:_startCountdown()
 end

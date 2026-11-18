@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.6] - 2026-11-18
+
+### Fixed
+- The first letter tapped for a word is highlighted at once.
+
 ## [1.5.5] - 2026-11-12
 
 ### Changed
