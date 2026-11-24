@@ -646,12 +646,13 @@ function WordSearchScreen:_startCountdown()
     local m = self.match
     if not (self.party and m and m:hasClock()) or m:isRoundOver(self.board) then return end
     local gen = self._tick_gen
-    UIManager:scheduleIn(1, function() self:_onTick(gen) end)
+    self:schedule(1, function() self:_onTick(gen) end)
 end
 
 function WordSearchScreen:_stopCountdown()
     -- Any pending tick sees a newer generation and does nothing.
     self._tick_gen = (self._tick_gen or 0) + 1
+    self:cancelScheduled()
 end
 
 function WordSearchScreen:_onTick(gen)
@@ -670,7 +671,7 @@ function WordSearchScreen:_onTick(gen)
         local frame = self.header_frame
         UIManager:setDirty(self, function() return "fast", frame.dimen end)
     end
-    UIManager:scheduleIn(1, function() self:_onTick(gen) end)
+    self:schedule(1, function() self:_onTick(gen) end)
 end
 
 -- The word lists are only needed while a game is open: drop them when the
